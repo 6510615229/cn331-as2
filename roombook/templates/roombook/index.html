@@ -1,0 +1,11 @@
+{% extends "roombook/layout.html" %}
+{% block body %}
+<h1>Classrooms</h1>
+<ul>
+    {% for classroom in classrooms %}
+    <li><a href="{% url 'classroom' classroom.id %}">Classroom : ({{ classroom.code }}) {{ classroom.name }}</a></li>
+    {% empty %}
+    <li>No classrooms</li>
+    {% endfor %}
+</ul>
+{% endblock %}

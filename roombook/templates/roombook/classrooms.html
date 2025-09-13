@@ -1,0 +1,31 @@
+{% extends "roombook/layout.html" %}
+{% block body %}
+<h1>Classroom {{ classroom.id }}</h1>
+
+<ul>
+    <li>Room: ({{ classroom.code }}) {{ classroom.name }}</li>
+</ul>
+
+<h2>Students</h2>
+<ul>
+    {% for student in students %}
+    <li>{{ student }}</li>
+    {% empty %}
+    <li>No students</li>
+    {% endfor %}
+</ul>
+
+<h2>Add Student</h2>
+<form action="{% url 'book' classroom.id %}" method="POST">
+    {% csrf_token %}
+    <select name="student">
+        {% for student in non_students %}
+        <option value="{{ student.id }}">{{ student }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Add">
+</form>
+
+<br>
+<a href="{% url 'index' %}">Back to classrooms List</a>
+{% endblock %}
