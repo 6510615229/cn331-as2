@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <title>การจองของฉัน • Roombook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --ok: #059669;
+            --bad: #dc2626
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px
+        }
+
+        .nav {
+            background: #fff;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .brand {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700
+        }
+
+        .menu {
+            float: right
+        }
+
+        .link {
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 12px
+        }
+
+        h1 {
+            margin: .2rem 0 .6rem
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .messages {
+            list-style: none;
+            margin: .8rem 0;
+            padding: 0
+        }
+
+        .msg {
+            padding: .55rem .8rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: .5rem;
+            background: #fff
+        }
+
+        .table-wrap {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .05);
+            overflow: hidden
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        thead th {
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            padding: 12px;
+            font-weight: 700
+        }
+
+        tbody td {
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+            vertical-align: middle
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: .9rem
+        }
+
+        .ok {
+            background: var(--ok)
+        }
+
+        .bad {
+            background: var(--bad)
+        }
+
+        .btn {
+            display: inline-block;
+            padding: .5rem .9rem;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark)
+        }
+
+        .btn-outline {
+            background: #fff;
+            color: var(--primary)
+        }
+
+        .btn-outline:hover {
+            background: #f0f6ff
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end
+        }
+
+        .empty {
+            padding: 20px
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="container">
+            <a class="brand" href="{% url 'roombook:index' %}">Roombook</a>
+            <div class="menu">
+                <a class="link" href="{% url 'roombook:index' %}">Room List</a>
+                <!-- <a class="link" href="{% url 'students:index' %}">หน้าหลัก</a> -->
+                <a class="link" href="{% url 'students:logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}<li class="msg">{{ message }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>My booking</h1>
+        <p class="muted">Note: Limited to <b>1 hour/room/day.</b> If you wish to change the time, please cancel the
+            original reservation first.</p>
+
+        <div class="table-wrap">
+            <table>
+                <colgroup>
+                    <col style="width: 26%">
+                    <col style="width: 16%">
+                    <col style="width: 16%">
+                    <col style="width: 14%">
+                    <col style="width: 20%">
+                    <col style="width: 10%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Date</th>
+                        <th>Period</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                        <th class="actions">Operation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if bookings %}
+                    {% for b in bookings %}
+                    <tr>
+                        <td>{{ b.classroom.code }}-{{ b.classroom.name }}</td>
+                        <td>{{ b.date|date:'d/m/Y' }}</td>
+                        <td>{{ b.start_time|time:'H:i' }}–{{ b.end_time|time:'H:i' }}</td>
+                        <td>
+                            {% if b.canceled %}
+                            <span class="pill bad">canceled</span>
+                            {% else %}
+                            <span class="pill ok">reserved</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            <a class="btn btn-outline"
+                                href="{% url 'roombook:classroom' b.classroom.id %}?date={{ b.date|date:'Y-m-d' }}">room
+                                details</a>
+                        </td>
+                        <td>{% if not b.canceled %}
+                            <form method="post" action="{% url 'roombook:cancel_booking' b.id %}"
+                                onsubmit="return confirm('Confirm cancellation of this reservation?');"
+                                style="display:inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn">cancel</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="empty muted">No reservations</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+
+</html>

@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'roombook',
+    'students',
 ]
 
 MIDDLEWARE = [
@@ -66,7 +67,9 @@ TEMPLATES = [
         },
     },
 ]
-
+LOGIN_URL = 'students:login'
+LOGIN_REDIRECT_URL = 'students:index'
+LOGOUT_REDIRECT_URL = 'students:login'
 WSGI_APPLICATION = 'classrooms.wsgi.application'
 
 
@@ -105,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
