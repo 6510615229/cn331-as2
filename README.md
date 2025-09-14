@@ -82,9 +82,7 @@
    # macOS/Linux
    source .venv/bin/activate
 
-   pip install Django==5.2.6
-   # หรือถ้ามี requirements.txt
-   # pip install -r requirements.txt
+   pip install -r requirements.txt
 
 1. สร้างฐานข้อมูล
 
