@@ -12,6 +12,9 @@ class Classrooms(models.Model):
     open_time = models.TimeField(default=dtime(8, 0))          # 08:00
     close_time = models.TimeField(default=dtime(18, 0))        # 18:00
 
+    class Meta:
+        verbose_name_plural = "Classrooms"
+
     def __str__(self):
         return f"{self.name} ({self.code})"
 
