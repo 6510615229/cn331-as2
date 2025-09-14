@@ -67,7 +67,9 @@ TEMPLATES = [
         },
     },
 ]
-
+LOGIN_URL = 'students:login'
+LOGIN_REDIRECT_URL = 'students:index'
+LOGOUT_REDIRECT_URL = 'students:login'
 WSGI_APPLICATION = 'classrooms.wsgi.application'
 
 
