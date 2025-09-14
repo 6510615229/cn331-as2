@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Admin Overview • Roombook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+            line-height: 1.6
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px
+        }
+
+        .nav {
+            background: #fff;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .brand {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700
+        }
+
+        .menu {
+            float: right
+        }
+
+        .link {
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 12px
+        }
+
+        h1 {
+            margin: .2rem 0 .6rem
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .05)
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end
+        }
+
+        input[type=date] {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: .55rem .8rem
+        }
+
+        .kpi {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px
+        }
+
+        .tile {
+            flex: 1 1 220px
+        }
+
+        .tile .title {
+            color: var(--muted)
+        }
+
+        .tile .val {
+            font-size: 1.8rem;
+            font-weight: 800
+        }
+
+        .table-wrap {
+            margin-top: 14px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .05);
+            overflow: hidden
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed
+        }
+
+        thead th {
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            padding: 12px;
+            font-weight: 700
+        }
+
+        tbody td {
+            border-bottom: 1px solid var(--border);
+            padding: 12px;
+            vertical-align: top
+        }
+
+        tbody tr:hover {
+            background: #f9fbff
+        }
+
+        .empty {
+            padding: 16px;
+            color: var(--muted)
+        }
+
+        .btn {
+            display: inline-block;
+            padding: .55rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark)
+        }
+
+        ul.booklist {
+            margin: .2rem 0 0 1.1rem
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="container">
+            <a class="brand" href="{% url 'roombook:index' %}">Roombook</a>
+            <div class="menu">
+                <!-- <a class="link" href="{% url 'roombook:index' %}">Rooms</a>
+                <a class="link" href="{% url 'roombook:my_bookings' %}">My Bookings</a> -->
+                <a class="link" href="{% url 'students:logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1>Admin Overview</h1>
+        <p class="muted">Summary of bookings for the selected date and only showing rooms that have been booked.</p>
+
+        <div class="card">
+            <form method="get" class="row" onsubmit="/* prevent full submit */">
+                <div>
+                    <label class="muted">choose date</label><br>
+                    <input type="date" id="pick-date" value="{{ the_date|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <a class="btn" id="go-date" href="#">see on date</a>
+                </div>
+            </form>
+
+            <div class="kpi">
+                <div class="tile card">
+                    <div class="title">Rooms (all)</div>
+                    <div class="val">{{ kpi_rooms_total }}</div>
+                </div>
+                <div class="tile card">
+                    <div class="title">Bookings (today)</div>
+                    <div class="val">{{ kpi_bookings_total }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <colgroup>
+                    <col style="width:14%">
+                    <col>
+                    <col style="width:55%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Room Code</th>
+                        <th>Room Name</th>
+                        <th>Reservation (Period-Booker)</th>
+                    </tr>
+                </thead>
+                <tbody id="room-rows">
+
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    {{ rows_json|json_script:"rows-data" }}
+    <meta id="date-meta" data-date="{{ the_date|date:'Y-m-d' }}">
+    <meta id="rooms-prefix" data-prefix="{% url 'roombook:index' %}">
+
+    <script>
+        (function () {
+            var rows = JSON.parse(document.getElementById('rows-data').textContent || '[]');
+            var theDate = document.getElementById('date-meta').getAttribute('data-date');
+            var prefix = document.getElementById('rooms-prefix').getAttribute('data-prefix') || '/classrooms/';
+            if (prefix.slice(-1) !== '/') prefix += '/';
+
+            // date navigation
+            var input = document.getElementById('pick-date');
+            var go = document.getElementById('go-date');
+            function selectedDate() { return input && input.value ? input.value : theDate; }
+            function updateGoHref() { go.setAttribute('href', location.pathname + '?date=' + encodeURIComponent(selectedDate())); }
+            input.addEventListener('change', updateGoHref); updateGoHref();
+
+            // render table
+            var tbody = document.getElementById('room-rows');
+            function roomLink(id) { return prefix + id + '/?date=' + encodeURIComponent(selectedDate()); }
+
+            if (!rows || rows.length === 0) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td'); td.colSpan = 3; td.className = 'empty';
+                td.textContent = 'ไม่มีการจอง';
+                tr.appendChild(td); tbody.appendChild(tr);
+                return;
+            }
+
+            rows.forEach(function (r) {
+                var tr = document.createElement('tr');
+
+                var tdCode = document.createElement('td'); tdCode.textContent = r.code || '';
+
+                var tdName = document.createElement('td');
+                var a = document.createElement('a'); a.href = roomLink(r.id); a.className = 'link'; a.textContent = r.name || '';
+                tdName.appendChild(a);
+
+                var tdBookings = document.createElement('td');
+                var ul = document.createElement('ul'); ul.className = 'booklist';
+                (r.bookings || []).forEach(function (b) {
+                    var li = document.createElement('li');
+                    li.textContent = (b.start || '') + '–' + (b.end || '') + ' — ' + (b.user || '');
+                    ul.appendChild(li);
+                });
+                tdBookings.appendChild(ul);
+
+                tr.appendChild(tdCode); tr.appendChild(tdName); tr.appendChild(tdBookings);
+                tbody.appendChild(tr);
+            });
+        })();
+    </script>
+</body>
+
+</html>
