@@ -1,30 +1,66 @@
 from django.db import models
-
+from datetime import datetime, timedelta, time as dtime, date as ddate
+from django.conf import settings
+from django.db.models import Q
 # Create your models here.
+
 class Classrooms(models.Model):
-    code = models.CharField(max_length=3)
+    code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=64)
-    hours_Available = models.IntegerField()
-    capacity = models.PositiveIntegerField(default=2)
-    is_available = models.BooleanField(default=True)
-    
-    def __str__(self):
-        return f"{self.id}: {self.name} ({self.code})"
-    
-    def is_seat_available(self):
-        return self.students.count() < self.capacity
-    
-    def is_hour_available(self):
-        return self.students.count() < self.hours_Available
-    
-    def can_add_student(self):
-        return self.is_available and self.is_seat_available() and self.is_hour_available()
-
-class Students(models.Model):
-    first = models.CharField(max_length=64)
-    last = models.CharField(max_length=64)
-    rooms = models.ManyToManyField(Classrooms, blank=True, related_name="students")
+    capacity = models.PositiveIntegerField(default=1)          # จองพร้อมกันได้กี่คนต่อ 1 ช่วงเวลา
+    is_available = models.BooleanField(default=True)           # เปิด/ปิดการจองทั้งห้อง
+    open_time = models.TimeField(default=dtime(8, 0))          # 08:00
+    close_time = models.TimeField(default=dtime(18, 0))        # 18:00
 
     def __str__(self):
-        return f"{self.first} {self.last}"
+        return f"{self.name} ({self.code})"
+
+    def hours_range(self):
+        slots = []
+        if self.open_time and self.close_time and self.open_time < self.close_time:
+            cur = datetime.combine(ddate.today(), self.open_time)
+            end = datetime.combine(ddate.today(), self.close_time)
+            while cur + timedelta(hours=1) <= end:
+                slots.append(cur.time())
+                cur += timedelta(hours=1)
+        return slots
+    
+    def is_slot_available(self, the_date: ddate, start_time: dtime) -> bool:
+        if not self.is_available:
+            return False
+        return not Booking.objects.filter(
+            classroom=self,
+            date=the_date,
+            start_time=start_time,
+            canceled=False
+        ).exists()
+
+class Booking(models.Model):
+    classroom   = models.ForeignKey(Classrooms, on_delete=models.CASCADE, related_name="bookings")
+    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")
+    date        = models.DateField()
+    start_time  = models.TimeField()
+    end_time    = models.TimeField()
+    canceled    = models.BooleanField(default=False)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            # กันการชนกันของสล็อตเดียวกัน
+            models.UniqueConstraint(
+                fields=["classroom", "date", "start_time"],
+                condition=Q(canceled=False),
+                name="uniq_room_slot_active",
+            ),
+            # กันคนเดิมจองมากกว่า 1 ชั่วโมง/ห้อง/วัน”
+            models.UniqueConstraint(
+                fields=["user", "classroom", "date"],
+                condition=Q(canceled=False),
+                name="one_hour_per_room_per_day",
+            ),
+        ]
+        ordering = ["-date", "start_time"]
+
+    def __str__(self):
+        return f"{self.classroom.name} {self.date} {self.start_time}-{self.end_time} by {self.user}"
     
