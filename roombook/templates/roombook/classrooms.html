@@ -1,31 +1,290 @@
-{% extends "roombook/layout.html" %}
-{% block body %}
-<h1>Classroom {{ classroom.id }}</h1>
+<!doctype html>
+<html lang="th">
 
-<ul>
-    <li>Room: ({{ classroom.code }}) {{ classroom.name }}</li>
-</ul>
+<head>
+    <meta charset="utf-8" />
+    <title>{{ room.name }} • Roombook</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --bg: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --ok: #059669;
+            --bad: #dc2626
+        }
 
-<h2>Students</h2>
-<ul>
-    {% for student in students %}
-    <li>{{ student }}</li>
-    {% empty %}
-    <li>No students</li>
-    {% endfor %}
-</ul>
+        * {
+            box-sizing: border-box
+        }
 
-<h2>Add Student</h2>
-<form action="{% url 'book' classroom.id %}" method="POST">
-    {% csrf_token %}
-    <select name="student">
-        {% for student in non_students %}
-        <option value="{{ student.id }}">{{ student }}</option>
-        {% endfor %}
-    </select>
-    <input type="submit" value="Add">
-</form>
+        html,
+        body {
+            height: 100%
+        }
 
-<br>
-<a href="{% url 'index' %}">Back to classrooms List</a>
-{% endblock %}
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+            line-height: 1.6
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 16px
+        }
+
+        .nav {
+            background: #fff;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .brand {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 700
+        }
+
+        .menu {
+            float: right
+        }
+
+        .link {
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 12px
+        }
+
+        h1 {
+            margin: .2rem 0 .6rem
+        }
+
+        .muted {
+            color: var(--muted)
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .05)
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            margin-top: 10px
+        }
+
+        .choice {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #fff
+        }
+
+        .choice.unavailable {
+            opacity: .6
+        }
+
+        .choice:hover {
+            background: #f9fbff
+        }
+
+        .choice input[type=radio] {
+            transform: scale(1.15)
+        }
+
+        .time {
+            font-weight: 600
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: .85rem
+        }
+
+        .ok {
+            background: var(--ok)
+        }
+
+        .bad {
+            background: var(--bad)
+        }
+
+        .btn {
+            display: inline-block;
+            padding: .6rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--primary);
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark)
+        }
+
+        .btn:disabled {
+            opacity: .55;
+            cursor: not-allowed
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav">
+        <div class="container">
+            <a class="brand" href="{% url 'roombook:index' %}">Roombook</a>
+            <div class="menu">
+                <a class="link" href="{% url 'roombook:my_bookings' %}">My booking</a>
+                <!-- <a class="link" href="{% url 'students:index' %}">หน้าหลัก</a> -->
+                <a class="link" href="{% url 'students:logout' %}">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <button type="button" class="btn" color="green" onclick="window.history.back()">Back</button>
+
+        <div class="card" style="margin:12px 0 16px">
+            <h1>{{ room.code }}-{{ room.name }}</h1>
+            <p class="muted">
+                capacity: {{ room.capacity }} • time: {{ room.open_time|time:'H:i' }}–{{ room.close_time|time:'H:i' }}
+                • status: {{ room_status }}
+            </p>
+            <form method="get" class="row">
+                <div>
+                    <label class="muted">choose date</label><br>
+                    <input type="date" name="date" value="{{ the_date|date:'Y-m-d' }}">
+                </div>
+                <div>
+                    <button class="btn" type="submit">see period</button>
+                </div>
+            </form>
+        </div>
+
+        <form method="post" action="{% url 'roombook:book' room.id %}" class="card" id="bookForm">
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ the_date|date:'Y-m-d' }}">
+            <h3 style="margin:0 0 .6rem">Choose period ({{ the_date|date:'d/m/Y' }})</h3>
+
+            <div id="slot-choices" class="choices"></div>
+            <p id="no-slots" class="muted" style="margin-top:10px; display:none">There are no booking periods available
+                today</p>
+            <p id="room-closed" class="muted" style="margin-top:10px; display:none">This room is closed for booking</p>
+
+            <div style="margin-top:12px">
+                <button class="btn" type="submit" id="bookBtn" disabled>reserve</button>
+            </div>
+        </form>
+
+        <!-- <div class="card" style="margin-top:16px">
+            <h3 style="margin:0 0 .6rem">การจองวันนี้</h3>
+            <div id="bookings-list" class="muted"></div>
+        </div> -->
+
+        {{ slot_json|json_script:"slot-data" }}
+        {{ bookings_json|json_script:"bookings-data" }}
+        <meta id="my-booking" data-exists="{{ my_booking_exists }}" data-time="{{ my_booking_start }}">
+        <meta id="room-open" data-open="{{ room_open }}">
+    </main>
+    <script>
+        (function () {
+            var roomOpen = (document.getElementById('room-open').getAttribute('data-open') === '1');
+            var myMeta = document.getElementById('my-booking');
+            var hasMine = (myMeta.getAttribute('data-exists') === 'True');
+            var mineTime = myMeta.getAttribute('data-time') || '';
+
+            var slotData = JSON.parse(document.getElementById('slot-data').textContent || '[]');
+            var bookingsData = JSON.parse(document.getElementById('bookings-data').textContent || '[]');
+
+            var choices = document.getElementById('slot-choices');
+            var noSlots = document.getElementById('no-slots');
+            var roomClosed = document.getElementById('room-closed');
+            var btn = document.getElementById('bookBtn');
+
+            if (!roomOpen) { roomClosed.style.display = 'block'; btn.disabled = true; }
+
+            if (hasMine) {
+                var info = document.createElement('div');
+                info.className = 'card';
+                info.style.margin = '12px 0';
+                info.innerHTML = '<p class="muted"> You have already reserved this room for today at <b>' + mineTime +
+                    '</b> (Limited to 1 hour per room per day) If you want to change the time, please cancel the original booking in "My booking"</p>';
+                document.getElementById('bookForm').insertAdjacentElement('beforebegin', info);
+            }
+
+            function renderSlots() {
+                choices.innerHTML = '';
+                if (!slotData || slotData.length === 0) { noSlots.style.display = 'block'; return; }
+                noSlots.style.display = 'none';
+
+                slotData.forEach(function (s) {
+                    var label = document.createElement('label');
+                    label.className = 'choice' + (s.can_book ? '' : ' unavailable');
+
+                    var input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = 'start_time';
+                    input.value = s.start;
+
+                    if (!s.can_book || !roomOpen || hasMine) input.disabled = true;
+
+                    var time = document.createElement('span');
+                    time.className = 'time';
+                    time.textContent = s.start + '–' + s.end;
+
+                    var badge = document.createElement('span');
+                    badge.className = 'badge ' + (s.can_book ? 'ok' : 'bad');
+                    badge.textContent = s.can_book ? 'available' : 'unavailable';
+
+                    label.appendChild(input); label.appendChild(time); label.appendChild(badge);
+                    choices.appendChild(label);
+
+                    input.addEventListener('change', function () { btn.disabled = !input.checked; });
+                });
+
+                if (hasMine) btn.disabled = true;
+            }
+
+            function renderBookings() {
+                var wrap = document.getElementById('bookings-list');
+                if (!bookingsData || bookingsData.length === 0) { wrap.textContent = 'There are no reservations today.'; return; }
+                wrap.innerHTML = '';
+                bookingsData.forEach(function (b) {
+                    var p = document.createElement('p'); p.style.margin = '.2rem 0';
+                    p.textContent = '• ' + b.start + '–' + b.end + ' โดย ' + b.user;
+                    wrap.appendChild(p);
+                });
+            }
+
+            renderSlots(); renderBookings();
+        })();
+    </script>
+</body>
+
+</html>
