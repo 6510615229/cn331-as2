@@ -99,3 +99,8 @@
 
     ```bash
     python manage.py runserver
+
+---
+
+## คลิปสอนการใช้งาน
+    https://youtu.be/OPusKwJ5SSw
