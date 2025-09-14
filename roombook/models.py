@@ -28,12 +28,14 @@ class Classrooms(models.Model):
     def is_slot_available(self, the_date: ddate, start_time: dtime) -> bool:
         if not self.is_available:
             return False
-        return not Booking.objects.filter(
+        active_bookings_count = Booking.objects.filter(
             classroom=self,
             date=the_date,
             start_time=start_time,
             canceled=False
-        ).exists()
+        ).count()
+
+        return active_bookings_count < self.capacity
 
 class Booking(models.Model):
     classroom   = models.ForeignKey(Classrooms, on_delete=models.CASCADE, related_name="bookings")
@@ -46,13 +48,6 @@ class Booking(models.Model):
 
     class Meta:
         constraints = [
-            # กันการชนกันของสล็อตเดียวกัน
-            models.UniqueConstraint(
-                fields=["classroom", "date", "start_time"],
-                condition=Q(canceled=False),
-                name="uniq_room_slot_active",
-            ),
-            # กันคนเดิมจองมากกว่า 1 ชั่วโมง/ห้อง/วัน”
             models.UniqueConstraint(
                 fields=["user", "classroom", "date"],
                 condition=Q(canceled=False),
@@ -63,4 +58,3 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.classroom.name} {self.date} {self.start_time}-{self.end_time} by {self.user}"
-    
