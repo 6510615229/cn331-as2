@@ -9,7 +9,7 @@
 
 # Classrooms Project
 
-เว็บแอป **ระบบจองห้องเรียน** พัฒนาด้วย **Django** แบ่งเป็น 2 แอป:
+เว็บแอป **ระบบจองห้องเรียน** พัฒนาด้วย **Django** แบ่งเป็น 2 แอป :
 
 - `roombook` — จัดการห้องและการจอง
 - `students` — สมัครสมาชิก/เข้าสู่ระบบ/ออกจากระบบ และ admin login
@@ -54,6 +54,7 @@
 
 # URL Paths
 
+- `/admin/` — หน้าเข้าระบบ Django Admin  
 - `/students/` — หน้าแรกของ students  
 - `/students/register/` — สมัครสมาชิก  
 - `/students/login/` — เข้าสู่ระบบผู้ใช้ทั่วไป  
@@ -104,3 +105,10 @@
 
 ## คลิปสอนการใช้งาน
 https://youtu.be/OPusKwJ5SSw
+
+---
+
+## การใช้งานผ่าน web app บน cloud
+URL: https://cn331-as2-n86r.onrender.com
+คลิปอธิบายการใช้งาน : 
+สามารถดูรายละเอียด username และ password จากไฟล์ usersinfo.pdf ใน repository นี้ได้
