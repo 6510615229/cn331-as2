@@ -109,6 +109,6 @@ https://youtu.be/OPusKwJ5SSw
 ---
 
 ## การใช้งานผ่าน web app บน cloud
-URL: https://cn331-as2-n86r.onrender.com
-คลิปอธิบายการใช้งาน : 
-สามารถดูรายละเอียด username และ password จากไฟล์ usersinfo.pdf ใน repository นี้ได้
+- URL: https://cn331-as2-n86r.onrender.com
+- คลิปอธิบายการใช้งาน : 
+- สามารถดูรายละเอียด username และ password จากไฟล์ usersinfo.pdf ใน repository นี้ได้
