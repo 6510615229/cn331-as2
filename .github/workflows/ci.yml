@@ -27,7 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install coverage
-          python manage.py migrate
+          python manage.py migrate --noinput
 
       - name: Run unit tests with coverage (separate apps)
         env:
@@ -35,8 +35,8 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
         run: |
           coverage erase
-          coverage run --source='.' manage.py test roombook -v 2
-          coverage run -a --source='.' manage.py test students -v 2
+          coverage run --source='.' manage.py test roombook.tests -v 2
+          coverage run -a --source='.' manage.py test students.tests -v 2
           coverage report -m
           coverage html
 
