@@ -269,4 +269,5 @@ Workflow: `.github/workflows/ci.yml`
 
 - `roombook` app
 - `students` app  
+
 โดยใช้ `coverage` ในการวัด code coverage อัตโนมัติ
