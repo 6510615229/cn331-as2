@@ -257,3 +257,16 @@ coverage run --source='roombook' manage.py test roombook -v 2
 coverage run -a --source='students' manage.py test students -v 2
 coverage report -m
 ```
+
+---
+
+## Continuous Integration (CI)
+
+มีการตั้งค่า GitHub Actions สำหรับรัน Unit Tests อัตโนมัติเมื่อมีการ push หรือ pull request ไปยัง branch `testing`.
+
+Workflow: `.github/workflows/ci.yml`  
+การทดสอบประกอบด้วย:
+
+- `roombook` app
+- `students` app  
+โดยใช้ `coverage` ในการวัด code coverage อัตโนมัติ
