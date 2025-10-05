@@ -1,0 +1,47 @@
+name: Testing
+
+on:
+  push:
+    branches: [ testing ]
+  pull_request:
+    branches: [ testing ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage
+          python manage.py migrate
+
+      - name: Run unit tests with coverage (separate apps)
+        env:
+          DJANGO_SETTINGS_MODULE: classrooms.settings
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          coverage erase
+          coverage run --source='.' manage.py test roombook -v 2
+          coverage run -a --source='.' manage.py test students -v 2
+          coverage report -m
+          coverage html
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/**
